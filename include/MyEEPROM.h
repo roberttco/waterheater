@@ -14,15 +14,15 @@
 #endif
 
 // EEPROM variables and defines
-#define SPL_ADDRESS 0
-#define SPH_ADDRESS 4
-#define PFL_ADDRESS 8
-#define FUDL_ADDRESS 12
-#define FPDL_ADDRESS 16
-#define IP_ADDRESS 20
-#define RADIO_ID_ADDRESS 24
-#define RADIO_CHANNEL_ADDRESS 25
-#define LAST_ADDRESS 26
+#define SPL_ADDRESS             0
+#define SPH_ADDRESS             4
+#define PFL_ADDRESS             8
+#define FUDL_ADDRESS            12
+#define FPDL_ADDRESS            16
+#define IP_ADDRESS              20
+#define RADIO_ID_ADDRESS        24
+#define RADIO_CHANNEL_ADDRESS   25
+#define LAST_ADDRESS            26
 
 void setDefaultEEPROMSettings(uint16_t lastAddress);
 bool getEEPROMFloatValue(unsigned int address,float *variable, float default_value, bool save);

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "MyEEPROM.h"
 
-#include "Radio.h"
+#include "CRadio.h"
 #include "StateMachine.h"
 
 void setDefaultEEPROMSettings(uint16_t lastAddress)

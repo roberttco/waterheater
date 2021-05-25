@@ -8,7 +8,9 @@
 #include "StateMachine.h"
 #include "MyEEPROM.h"
 #include "WebServer.h"
-#include "Radio.h"
+#include "CRadio.h"
+
+extern CRadio radio;
 
 char buf[MAX_BUFLEN];
 char path[PATH_BUFLEN];
@@ -163,8 +165,7 @@ bool doWebServer()
                   saveIpAddress();
 
                   WSDEBUG_PRINTLN("Saving radio ID");
-                  saveRadioConfig();
-
+                  radio.saveConfig();
                   requestcommand = CMD_JSON;  // override the command so the output is the status of the change
                   whstate.settingsSaved = true;
                   break;
@@ -183,13 +184,13 @@ bool doWebServer()
                   break;
                 case CMD_SET_RADIO_ID:
                   whstate.radio.id = (uint8_t)intval;
-                  setRadioId(intval);
+                  radio.setId(intval);
                   requestcommand = CMD_JSON;
                   whstate.settingsSaved = false;
                   break;
                 case CMD_SET_RADIO_CHANNEL:
                   whstate.radio.channel = (uint8_t)intval;
-                  setRadioChannel(intval);
+                  radio.setChannel(intval);
                   requestcommand = CMD_JSON;
                   whstate.settingsSaved = false;
                   break;
@@ -260,9 +261,9 @@ bool doWebServer()
                   client.print(F(",\"dhcp\":\""));
                   client.print(whstate.ip.dhcp ? "1":"0");
                   client.print(F("\",\"radio_id\":"));
-                  client.print(getRadioId());
+                  client.print(radio.id());
                   client.print(F(",\"radio_ch\":"));
-                  client.print(getRadioChannel());
+                  client.print(radio.channel());
                   client.print(F("},\"control\":{\"force\":"));
                   client.print(whcontrol.force);
                   client.print(F(",\"sph\":"));

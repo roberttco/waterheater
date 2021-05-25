@@ -1,6 +1,8 @@
 #ifndef __EWH_H_
 #define __EWH_H_
 
+#include "CRadio.h"
+
 //#define DEBUG
 
 #ifdef DEBUG
