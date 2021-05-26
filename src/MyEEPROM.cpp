@@ -17,12 +17,12 @@ void setDefaultEEPROMSettings(uint16_t lastAddress)
     EEPROM.put(PFL_ADDRESS, (float)DEFAULT_PFL);
     EEPROM.put(FUDL_ADDRESS, (unsigned int)3000);
     EEPROM.put(FPDL_ADDRESS, (unsigned int)3100);
-    EEPROM.put(IP_ADDRESS + 0, (byte)0);
-    EEPROM.put(IP_ADDRESS + 1, (byte)0);
-    EEPROM.put(IP_ADDRESS + 2, (byte)0);
-    EEPROM.put(IP_ADDRESS + 3, (byte)0);
-    EEPROM.put(RADIO_ID_ADDRESS, (byte)RADIO_ID);
-    EEPROM.put(RADIO_CHANNEL_ADDRESS, (byte)RADIO_CHANNEL);
+    EEPROM.put(IP_ADDRESS + 0, (unsigned char)0);
+    EEPROM.put(IP_ADDRESS + 1, (unsigned char)0);
+    EEPROM.put(IP_ADDRESS + 2, (unsigned char)0);
+    EEPROM.put(IP_ADDRESS + 3, (unsigned char)0);
+    EEPROM.put(RADIO_ID_ADDRESS, (unsigned char)RADIO_ID);
+    EEPROM.put(RADIO_CHANNEL_ADDRESS, (unsigned char)RADIO_CHANNEL);
 }
 
 float getEEPROMFloatValue(unsigned int address, float default_value)

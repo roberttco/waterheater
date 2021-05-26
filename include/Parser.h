@@ -43,8 +43,9 @@
 #define PATH_BUFLEN 15
 
 // command parser
-extern byte command;
+extern unsigned char command;
 
-int parseCommandLine(char *buf, char *path, int path_buf_len, float *floatval, int *intval, byte *byteval);
+int parseCommandLine(char *buf, char *path, int path_buf_len, float *floatval, int *intval, unsigned char *byteval);
+unsigned char executeCommand(unsigned char command, float floatval, int intval, unsigned char byteval);
 
 #endif

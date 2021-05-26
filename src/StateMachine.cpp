@@ -8,7 +8,7 @@
 #include "Types.h"
 #include "TemperatureSensor.h"
 #include "MyEEPROM.h"
-//#include "EthernetWaterheater.h"
+//#include "Waterheater.h"
 
 extern WaterHeaterState whstate;
 extern WaterHeaterControl whcontrol;

@@ -1,4 +1,14 @@
+#include <EEPROM.h>
+
 #include "Parser.h"
+#include "Config.h"
+#include "Types.h"
+#include "Radio.h"
+#include "NetworkManagement.h"
+
+
+extern WaterHeaterState whstate;
+extern WaterHeaterControl whcontrol;
 
 int parseCommandLine(char *buf, char *path, int path_buf_len, float *floatval, int *intval, byte *byteval)
 {
@@ -50,8 +60,7 @@ int parseCommandLine(char *buf, char *path, int path_buf_len, float *floatval, i
             // end of path - beginning of path (1-based this is a length and not a buffer offset).  5 for length of HTTP + leading space
             pathlength = (pathfinder - 5) - 4;
 
-            for (byte j = 0; j < pathlength && j < path_buf_len - 1; path[j] = toupper(buf[j + beginningofpath]), j++)
-                ;
+            for (byte j = 0; j < pathlength && j < path_buf_len - 1; path[j] = toupper(buf[j + beginningofpath]), j++);
             path[min(pathlength, path_buf_len)] = 0;
             break;
         }
@@ -197,4 +206,134 @@ int parseCommandLine(char *buf, char *path, int path_buf_len, float *floatval, i
     *byteval = b_rval;
 
     return command;
+}
+
+// execute command and return 
+unsigned char executeCommand(unsigned char command, float floatval, int intval, unsigned char byteval)
+{
+    unsigned char requestcommand = command;
+
+    switch (command)
+    {
+        case CMD_FORCE:
+            if (whcontrol.enable == false)
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                whcontrol.force = intval > 0 ? true : false;
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+            }
+            break;
+        case CMD_ENABLE:
+            whcontrol.enable = intval > 0 ? true : false;
+            requestcommand = CMD_JSON; // override the command so the output is the status of the change
+            break;
+        case CMD_SETSPL:
+            if (floatval < 1 || floatval > (whcontrol.sph_c - 0.5))
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whcontrol.spl_c = floatval;
+                EEPROM.put(SPL_ADDRESS, whcontrol.spl_c);
+            }
+            break;
+        case CMD_SETSPH:
+            if (floatval < 1 || floatval < (whcontrol.spl_c + 0.5) || floatval > MAX_TEMPC)
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whcontrol.sph_c = floatval;
+                EEPROM.put(SPH_ADDRESS, whcontrol.sph_c);
+            }
+            break;
+        case CMD_SETPFL:
+            if (floatval < 0.05 || floatval > 10)
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whcontrol.pfl_lpm = floatval;
+                EEPROM.put(PFL_ADDRESS, whcontrol.pfl_lpm);
+            }
+            break;
+        case CMD_SETFLOW_UNPAUSE_DELAY:
+            // invalid if negative, between 0 and 1000, and over 20000
+            if (intval < 0 || (intval > 0 && intval < 1000) || intval > 20000)
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whcontrol.unpausedelayms = intval;
+                EEPROM.put(FUDL_ADDRESS, whcontrol.unpausedelayms);
+            }
+            break;
+        case CMD_SETFLOW_PAUSE_DELAY:
+            // invalid if negative, between 0 and 1000, and over 20000
+            if (intval < 0 || (intval > 0 && intval < 1000) || intval > 20000)
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whcontrol.pausedelayms = intval;
+                EEPROM.put(FPDL_ADDRESS, whcontrol.pausedelayms);
+            }
+            break;
+        case CMD_SAVE:
+            // TODO: remove or figure out something else to do with save
+            break;
+        case CMD_SET_IP:
+            if (!setIpAddressOctet(intval, byteval))
+            {
+                requestcommand = CMD_INVALID;
+            }
+            else
+            {
+                requestcommand = CMD_JSON; // override the command so the output is the status of the change
+                whstate.rebootRequired = true;
+            }
+            break;
+        case CMD_SET_RADIO_ID:
+            whstate.radio.id = (uint8_t)intval;
+            setRadioId(intval);
+            requestcommand = CMD_JSON;
+            whstate.rebootRequired = true;
+            break;
+        case CMD_SET_RADIO_CHANNEL:
+            whstate.radio.channel = (uint8_t)intval;
+            setRadioChannel(intval);
+            requestcommand = CMD_JSON;
+            whstate.rebootRequired = true;
+            break;
+        case CMD_BYPASS:
+            whstate.bypass = (intval == 1);
+
+            if (intval == 0)
+            {
+                digitalWrite(BYPASS_RELAY_PIN,HIGH);
+                whstate.bypass = false;
+            }
+            else
+            {
+                digitalWrite(BYPASS_RELAY_PIN,LOW);
+            }
+            requestcommand = CMD_JSON;
+            break;                            
+        default:
+            break;
+    }
+    return requestcommand;
 }

@@ -4,7 +4,7 @@
 //#include <SPI.h>
 //#include <PetitFS.h>
 
-#include "EthernetWaterheater.h"
+#include "Waterheater.h"
 
 #include "Config.h"
 #include "MyEEPROM.h"
@@ -26,7 +26,7 @@ auto timer = timer_create_default(); // create a timer with default settings
 WaterHeaterState whstate;
 WaterHeaterControl whcontrol;
 
-void flashError(byte errorcode)
+void flashError(unsigned char errorcode)
 {
     DEBUG_PRINT(F("Fatal Error "));
     DEBUG_PRINTLN(errorcode);
@@ -35,7 +35,7 @@ void flashError(byte errorcode)
     {
         if (errorcode > 0)
         {
-            for (byte i = 0; i < errorcode; i++)
+            for (unsigned char i = 0; i < errorcode; i++)
             {
                 digitalWrite(ERRORLED_PIN, HIGH);
                 delay(250);
@@ -65,15 +65,16 @@ void setup()
     pinMode(BYPASS_RELAY_PIN, OUTPUT);
 
     // turn off relays
-    digitalWrite(N_RELAY1_PIN, HIGH); // relay is active low
-    digitalWrite(N_RELAY2_PIN, HIGH); // relay is active low
+    digitalWrite(N_RELAY1_PIN, HIGH);       // relay is active low
+    digitalWrite(N_RELAY2_PIN, HIGH);       // relay is active low
+    digitalWrite(BYPASS_RELAY_PIN, HIGH);   // relay is active low
 
     Serial.println(F("BOOT"));
 
     // if the reset pin is low then reset everything to defaults
     if (digitalRead(RESET_PIN) == 0)
     {
-        Serial.println("Reset pin low - resetting EEPROM contents and controller to default values");
+        Serial.println(F("Reset pin low"));
         setDefaultEEPROMSettings(LAST_ADDRESS);
     }
 
@@ -82,7 +83,7 @@ void setup()
     if (pf_mount(&fs))
     {
         Serial.println(F("SD error"));
-        flashError(2);
+        flashError(1);
     }
     else
     {
@@ -93,41 +94,29 @@ void setup()
 
     if (!initRadio())
     {
-        Serial.println(F("Radio init error"));
+        DEBUG_PRINTLN(F("Radio init error"));
     }
     else
     {
         whstate.radio.id = getRadioId();
         whstate.radio.channel = getRadioChannel();
-
-        Serial.print(F("Radio ID: "));
-        Serial.print(whstate.radio.id);
-        Serial.print(F(", Radio Channel: "));
-        Serial.println(whstate.radio.channel);
-
-        RadioStringPayload rsp = {0,0,RP_STRING_CLEAR,"Booting...       "};
-        radioSend(HUB_RADIO_ID,&rsp);
     }
 
-    RadioStringPayload rsp1 = {2,0,0,"Init sensor       "};
-    radioSend(HUB_RADIO_ID,&rsp1);
+    timer.every(RADIO_SEND_INTERVAL, sendStateViaRadio);
 
     if (!initTemperatureSensor())
     {
-        Serial.println(F("No temperature sensor."));
-        flashError(6);
+        DEBUG_PRINTLN(F("No temperature sensor."));
+        flashError(2);
     }
     else
     {
         timer.every(TEMP_UPDATE_INTERVAL, updateTemperature);
     }
 
-    RadioStringPayload rsp2 = {2,0,0,"Init state machine"};
-    radioSend(HUB_RADIO_ID,&rsp2);
-
     if (!initWaterHeaterSM())
     {
-        Serial.println(F("WHSM init error"));
+        DEBUG_PRINTLN(F("WHSM init error"));
         flashError(3);
     }
     else
@@ -135,24 +124,20 @@ void setup()
         timer.every(WHSM_INVOKE_INTERVAL, doWaterHeaterSM);
     }
 
-    RadioStringPayload rsp3 = {2,0,0,"Init network      "};
-    radioSend(HUB_RADIO_ID,&rsp3);
-
     if (!initNetwork())
     {
-        Serial.println(F("Could not init network."));
+        DEBUG_PRINTLN(F("Could not init network."));
     }
 
     if (!connectToNetwork(false))
     {
-        Serial.println(F("Couldn't connect to network.  Hoping for radio control."));
+        DEBUG_PRINTLN(F("Couldn't connect to network.  Hoping for radio control."));
     }
-    
-    Serial.println(getCurrentIpAddress());
+
+    // Update the state with the current IP address
     getCurrentIpAddress(&whstate.ip.ip[0], &whstate.ip.ip[1], &whstate.ip.ip[2], &whstate.ip.ip[3], &whstate.ip.dhcp);
     
     // tick the pause timer every 100ms
-    timer.every(RADIO_SEND_INTERVAL, sendStateViaRadio);
     timer.every(100, doWaterHeaterPauseCheck);
     timer.every(FLOW_CALC_INTERVAL, doCalculateWaterFlow);
 
@@ -172,7 +157,7 @@ void loop()
     // Can't do this with timer.every without some rework so do this here.  Check for a
     // new connection (cable plug in) only oif the system is not heating.  This is because
     // a DHCP timeout is very long and may cause heating to go too far.
-    if ((whstate.heating == false) && (millis() - lastNetCheck > NETWORK_RECONNECT_INTERVAL))
+    if (millis() - lastNetCheck > NETWORK_RECONNECT_INTERVAL)
     {
         if (checkNetworkCablePlugin())
         {

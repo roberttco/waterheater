@@ -6,14 +6,13 @@
 
 #include "Config.h"
 
-byte mac[6] = {0xE3, 0xA8, 0xD7, 0xE2, 0xF3, 0x7C};
-byte ip[4] = {0, 0, 0, 0};
+unsigned char mac[6] = {0xE3, 0xA8, 0xD7, 0xE2, 0xF3, 0x7C};
+unsigned char ip[4] = {0, 0, 0, 0};
 
 // ethernet connection variables
-byte connectionStatus = NETWORK_DISCONNECTED;
+unsigned char connectionStatus = NETWORK_DISCONNECTED;
 bool networkInitialized = false;
 EthernetLinkStatus lastLinkStatus = Unknown;
-byte dhcpRetries = 3;
 
 EthernetServer server = NULL;
 
@@ -42,7 +41,7 @@ bool networkConnected()
     return (connectionStatus != NETWORK_DISCONNECTED);
 }
 
-void getCurrentIpAddress(byte *ip1, byte *ip2, byte *ip3, byte *ip4, bool *dhcp)
+void getCurrentIpAddress(unsigned char *ip1, unsigned char *ip2, unsigned char *ip3, unsigned char *ip4, bool *dhcp)
 {
     *ip1 = ip[0];
     *ip2 = ip[1];
@@ -61,7 +60,7 @@ IPAddress getStoredIpAddress()
 {
     unsigned char sip[4];
 
-    for (register byte i = 0; i < 4; i++)
+    for (register unsigned char i = 0; i < 4; i++)
     {
         EEPROM.get(IP_ADDRESS + i,sip[i]);
     }
@@ -127,36 +126,39 @@ bool connectToNetwork(bool reconnect = false)
         NMDEBUG_PRINTLN("");
         NMDEBUG_PRINTLN(F("Initializing NIC"));
 
-        if (ip[0] == 0) // if the first octet is a 0 then use DHCP
+        if (Ethernet.linkStatus() == LinkON)
         {
-#ifndef ALWAYS_USE_DEFAULT_IP
-            uint8_t dhcpRetryCount = MAX_DHCP_RETRIES; // after this many retries, assing the default address.
-            while ((dhcpRetryCount) > 0 && (connectionStatus == NETWORK_DISCONNECTED))
+            Serial.print(F("Trying "));
+
+            if (ip[0] == 0) // if the first octet is a 0 then use DHCP
             {
-                Serial.println(F("Trying DHCP"));
-                connectionStatus = (Ethernet.begin(mac) == 1 ? NETWORK_DHCP : NETWORK_DISCONNECTED);
-                dhcpRetryCount--;
+    #ifndef ALWAYS_USE_DEFAULT_IP
+                if ((Ethernet.linkStatus() == LinkON) && (connectionStatus == NETWORK_DISCONNECTED))
+                {
+                    Serial.println(F("DHCP"));
+                    connectionStatus = (Ethernet.begin(mac) == 1 ? NETWORK_DHCP : NETWORK_DISCONNECTED);
+                }
+    #endif
+                if (connectionStatus == NETWORK_DISCONNECTED)
+                {
+                    Serial.println(F("DEFAULT"));
+                    Ethernet.begin(mac, IPAddress(172, 54, 0, 2));
+                    connectionStatus = NETWORK_STATIC;
+                }
             }
-#endif
-            if (connectionStatus == NETWORK_DISCONNECTED)
+            else
             {
-                NMDEBUG_PRINTLN(F("Using default IP"));
-                Ethernet.begin(mac, IPAddress(172, 54, 0, 2));
+                Serial.println(F("STATIC IP"));
+                Ethernet.begin(mac, getCurrentIpAddress());
                 connectionStatus = NETWORK_STATIC;
             }
 
-            // update th working IP address after DHCP opr default assignment;
-            IPAddress a = Ethernet.localIP();
-            ip[0] = a[0];
-            ip[1] = a[1];
-            ip[2] = a[2];
-            ip[3] = a[3];
+            Serial.println(F("IP"));
         }
         else
         {
-            NMDEBUG_PRINTLN(F("Trying STATIC"));
-            Ethernet.begin(mac, getCurrentIpAddress());
-            connectionStatus = NETWORK_STATIC;
+            Serial.println(F("No ETH link"));
+            connectionStatus = NETWORK_DISCONNECTED;
         }
     }
 
@@ -164,16 +166,19 @@ bool connectToNetwork(bool reconnect = false)
     {
         Serial.println(F("ETH connect failed"));
     }
-    else if (Ethernet.linkStatus() == LinkOFF)
-    {
-        NMDEBUG_PRINTLN(F("No ETH link"));
-        connectionStatus = NETWORK_DISCONNECTED;
-    }
     else
     {
         Serial.println(Ethernet.localIP());
         server.begin(); // start to listen for clients
     }
+
+    // update th working IP address after DHCP opr default assignment;
+    IPAddress a = Ethernet.localIP();
+            
+    ip[0] = a[0];
+    ip[1] = a[1];
+    ip[2] = a[2];
+    ip[3] = a[3];
 
     return networkConnected();
 }
@@ -183,11 +188,10 @@ void renewDhcpLease()
     // renew DHCP lease if needed - https://www.arduino.cc/en/Reference/EthernetMaintain
     if (connectionStatus == NETWORK_DHCP)
     {
-        byte renewStatus = Ethernet.maintain();
+        unsigned char renewStatus = Ethernet.maintain();
         if (renewStatus == 1 || renewStatus == 3)
         {
             connectionStatus = NETWORK_DISCONNECTED;
-            dhcpRetries = 3;
         }
     }
 }
@@ -201,7 +205,7 @@ bool checkNetworkCablePlugin()
 
     if (lastLinkStatus == LinkOFF && linkStatus == LinkON) // cable plug-in
     {
-        NMDEBUG_PRINTLN(F("Cable plugged in"));
+        Serial.println(F("Cable plugged in"));
         if (initNetwork())
         {
             connectToNetwork(false);
@@ -210,7 +214,7 @@ bool checkNetworkCablePlugin()
     }
     else if (lastLinkStatus == LinkON && linkStatus == LinkOFF) // cable unplug
     {
-        NMDEBUG_PRINTLN(F("Cable unplugged"));
+        Serial.println(F("Cable unplugged"));
         networkInitialized = false;
         connectionStatus = NETWORK_DISCONNECTED;
     }

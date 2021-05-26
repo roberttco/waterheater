@@ -22,7 +22,7 @@
 #define NETWORK_DHCP 1
 #define NETWORK_STATIC 2
 
-void getCurrentIpAddress(byte *ip1, byte *ip2, byte *ip3, byte *ip4, bool *dhcp);
+void getCurrentIpAddress(unsigned char *ip1, unsigned char *ip2, unsigned char *ip3, unsigned char *ip4, bool *dhcp);
 IPAddress getCurrentIpAddress();
 IPAddress getStoredIpAddress();
 unsigned char getStoredIpAddressOctet(int octet);
