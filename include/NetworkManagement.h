@@ -22,18 +22,23 @@
 #define NETWORK_DHCP 1
 #define NETWORK_STATIC 2
 
+void getCurrentIpAddress(byte *ip1, byte *ip2, byte *ip3, byte *ip4, bool *dhcp);
+IPAddress getCurrentIpAddress();
+IPAddress getStoredIpAddress();
+unsigned char getStoredIpAddressOctet(int octet);
+
 bool connectToNetwork(bool reconnect);
-bool networkConnected();
-void renewDhcpLease();
-void saveIpAddress();
-void setIPAddress(IPAddress address);
-void getIpAddress(byte *ip1, byte *ip2, byte *ip3, byte *ip4, bool *dhcp);
-IPAddress getIpAddress();
-EthernetServer getServer();
-EthernetClient getClient();
-bool setIpAddress(byte ip1, byte ip2, byte ip3, byte ip4);
-bool initNetwork();
+
 bool networkOk();
 bool checkNetworkCablePlugin();
+bool networkConnected();
+unsigned char getNetworkConnectionStatus();
+
+void renewDhcpLease();
+void saveIpAddress();
+EthernetServer getServer();
+EthernetClient getClient();
+bool setIpAddressOctet(int octet, unsigned char value);
+bool initNetwork();
 
 #endif

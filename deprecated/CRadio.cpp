@@ -1,7 +1,7 @@
 #include "CRadio.h"
-#include "Pins.h"
+#include "Config.h"
 
-CRadio::CRadio() 
+CRadio::CRadio()
 {
     m_radiook = false;
 }
@@ -22,8 +22,10 @@ CRadio::CRadio(unsigned char id, unsigned char channel)
         m_radiook = true;
     }
 
-    RDEBUG_PRINT (F("Startup radio ID = "));        RDEBUG_PRINTLN (id);
-    RDEBUG_PRINT (F("Startup radio channel = "));   RDEBUG_PRINTLN (channel);
+    RDEBUG_PRINT(F("Startup radio ID = "));
+    RDEBUG_PRINTLN(id);
+    RDEBUG_PRINT(F("Startup radio channel = "));
+    RDEBUG_PRINTLN(channel);
 }
 
 void CRadio::saveConfig()
@@ -32,17 +34,17 @@ void CRadio::saveConfig()
     //EEPROM.put(RADIO_CHANNEL_ADDRESS,radioChannel);
 }
 
-bool CRadio::ok() 
+bool CRadio::ok()
 {
     return m_radiook;
 }
 
-unsigned char CRadio::id() 
+unsigned char CRadio::id()
 {
     return m_device.id;
 }
 
-unsigned char CRadio::channel() 
+unsigned char CRadio::channel()
 {
     return m_device.channel;
 }

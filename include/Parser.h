@@ -32,7 +32,9 @@
 #define CMD_SET_IP 13
 #define CMD_SET_RADIO_ID 14
 #define CMD_SET_RADIO_CHANNEL 15
+#define CMD_BYPASS 16
 #define CMD_REBOOT 98
+
 #define CMD_INVALID 255
 
 

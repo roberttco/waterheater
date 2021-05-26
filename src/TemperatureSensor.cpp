@@ -1,6 +1,8 @@
-#include "TemperatureSensor.h"
 #include <DS18B20.h>
-#include "Pins.h"
+
+#include "TemperatureSensor.h"
+
+#include "Config.h"
 
 unsigned char dsAddress[8];
 DS18B20 ds(DS_PIN);

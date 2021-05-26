@@ -1,6 +1,8 @@
 #ifndef __RADIO_H_
 #define __RADIO_H_
 
+#include "Types.h"
+
 //#define RDEBUG
 
 #ifdef RDEBUG
@@ -11,17 +13,14 @@
 #define RDEBUG_PRINTLN(X)
 #endif
 
-#define RADIO_ID              1   // Our radio's id.
-#define DESTINATION_RADIO_ID  0   // Id of the radio we will transmit to.
-#define RADIO_CHANNEL         100
-
 bool initRadio();
 void saveRadioConfig();
-void setRadioId(uint8_t id);
-void setRadioChannel(uint8_t id);
+void setRadioId(unsigned char id);
+void setRadioChannel(unsigned char id);
 uint8_t getRadioId();
 uint8_t getRadioChannel();
 bool radioOk();
-bool radioSend(uint8_t destination, void *arg, uint8_t arg_length);
+bool radioSend(uint8_t destination, WaterHeaterState *arg);
+bool radioSend(uint8_t destination, RadioStringPayload *arg);
 
 #endif

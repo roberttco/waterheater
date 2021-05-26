@@ -14,10 +14,6 @@
 #define SMDEBUG_PRINTLN(X)
 #endif
 
-#define DEFAULT_SPL   47.7777777
-#define DEFAULT_SPH   48.8888888
-#define DEFAULT_PFL   1.0
-
 extern WaterHeaterState whstate;
 extern WaterHeaterControl whcontrol;
 

@@ -4,7 +4,7 @@
 #include <NRFLite.h>
 #include "Types.h"
 
-#define RDEBUG
+//#define RDEBUG
 
 #ifdef RDEBUG
 #define RDEBUG_PRINT(x) Serial.print(x)
@@ -14,9 +14,6 @@
 #define RDEBUG_PRINTLN(X)
 #endif
 
-#define RADIO_ID              1   // Our radio's id.
-#define DESTINATION_RADIO_ID  0   // Id of the radio we will transmit to.
-#define RADIO_CHANNEL         100
 
 class CRadio
 {
